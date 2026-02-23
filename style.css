@@ -543,20 +543,6 @@ body {
 }
 
 /* ========================================
-   Ad Container
-   ======================================== */
-.ad-container {
-  margin-top: 24px;
-  min-height: 100px;
-  display: flex;
-  justify-content: center;
-}
-
-.ad-container .adsbygoogle {
-  width: 100%;
-}
-
-/* ========================================
    Spec View
    ======================================== */
 .spec-section {

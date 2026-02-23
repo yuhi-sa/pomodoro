@@ -113,21 +113,6 @@ class PomodoroApp {
       this.renderDashboard();
     }
 
-    // Initialize ads in the newly visible view
-    this.pushAds(viewName);
-  }
-
-  pushAds(viewName) {
-    if (viewName === 'timer') return;
-    try {
-      const view = document.getElementById(`${viewName}-view`);
-      const ins = view && view.querySelector('.adsbygoogle');
-      if (ins && !ins.dataset.adsbygoogleStatus) {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      }
-    } catch (e) {
-      // Ad blocker or not loaded
-    }
   }
 
   // ----------------------------------------
