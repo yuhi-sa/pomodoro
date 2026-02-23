@@ -29,6 +29,7 @@ class PomodoroApp {
     this.history = this.loadHistory();
 
     this.audioCtx = null;
+    this.pipWindow = null;
 
     this.cacheElements();
     this.bindEvents();
@@ -53,6 +54,12 @@ class PomodoroApp {
     this.soundToggle = document.getElementById('sound-toggle');
     this.autoTransitionToggle = document.getElementById('auto-transition-toggle');
     this.btnResetHistory = document.getElementById('btn-reset-history');
+
+    // PiP
+    this.pipBtn = document.getElementById('pip-btn');
+    if ('documentPictureInPicture' in window) {
+      this.pipBtn.classList.add('supported');
+    }
   }
 
   bindEvents() {
@@ -79,6 +86,9 @@ class PomodoroApp {
         this.renderDashboard();
       }
     });
+
+    // PiP
+    this.pipBtn.addEventListener('click', () => this.openPiP());
 
     // Save work on page unload
     window.addEventListener('beforeunload', () => {
@@ -344,10 +354,24 @@ class PomodoroApp {
     this.phaseLabel.textContent = label;
     this.phaseLabel.className = `phase-label phase-${phase}`;
     this.phaseSub.textContent = sub;
+
+    if (this.pipWindow && !this.pipWindow.closed) {
+      const doc = this.pipWindow.document;
+      const el = doc.getElementById('pip-phase');
+      if (el) {
+        el.textContent = label;
+        el.className = `pip-phase phase-${phase}`;
+      }
+    }
   }
 
   setTimerDisplay(text) {
     this.timerTime.textContent = text;
+
+    if (this.pipWindow && !this.pipWindow.closed) {
+      const el = this.pipWindow.document.getElementById('pip-time');
+      if (el) el.textContent = text;
+    }
   }
 
   setTimerSub(text) {
@@ -362,10 +386,134 @@ class PomodoroApp {
 
   setActions(html) {
     this.actions.innerHTML = html;
+
+    if (this.pipWindow && !this.pipWindow.closed) {
+      const el = this.pipWindow.document.getElementById('pip-actions');
+      if (el) el.innerHTML = html;
+    }
   }
 
   render() {
     this.enterReady();
+  }
+
+  // ----------------------------------------
+  // Picture-in-Picture
+  // ----------------------------------------
+  async openPiP() {
+    if (!('documentPictureInPicture' in window)) return;
+
+    // Close existing PiP window
+    if (this.pipWindow && !this.pipWindow.closed) {
+      this.pipWindow.close();
+      this.pipWindow = null;
+      return;
+    }
+
+    try {
+      this.pipWindow = await documentPictureInPicture.requestWindow({
+        width: 300,
+        height: 200,
+      });
+
+      const pipDoc = this.pipWindow.document;
+
+      // Inject styles
+      const style = pipDoc.createElement('style');
+      style.textContent = `
+        :root {
+          --color-idling: #f59e0b;
+          --color-working: #ef4444;
+          --color-break: #06b6d4;
+          --color-ready: #6366f1;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          background: #0f0f1a;
+          color: #e8e8ec;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          gap: 12px;
+          overflow: hidden;
+          user-select: none;
+        }
+        .pip-phase {
+          font-size: 14px;
+          font-weight: 700;
+        }
+        .phase-ready { color: var(--color-ready); }
+        .phase-idling { color: var(--color-idling); }
+        .phase-working { color: var(--color-working); }
+        .phase-break { color: var(--color-break); }
+        .pip-time {
+          font-size: 48px;
+          font-weight: 700;
+          font-variant-numeric: tabular-nums;
+          letter-spacing: -1px;
+        }
+        .pip-actions {
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+          flex-wrap: wrap;
+          min-height: 36px;
+          align-items: center;
+        }
+        .btn {
+          padding: 8px 16px;
+          border: none;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          color: white;
+          white-space: nowrap;
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: var(--color-ready); }
+        .btn-idling { background: var(--color-idling); }
+        .btn-working { background: var(--color-working); }
+        .btn-break { background: var(--color-break); }
+        .btn-secondary {
+          background: #1a1a2e;
+          color: #e8e8ec;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+      `;
+      pipDoc.head.appendChild(style);
+
+      // Build content
+      const currentPhase = this.phaseLabel.className.replace('phase-label ', '');
+      pipDoc.body.innerHTML = `
+        <div id="pip-phase" class="pip-phase ${currentPhase}">${this.phaseLabel.textContent}</div>
+        <div id="pip-time" class="pip-time">${this.timerTime.textContent}</div>
+        <div id="pip-actions" class="pip-actions">${this.actions.innerHTML}</div>
+      `;
+
+      // Make app accessible from PiP window for onclick handlers
+      this.pipWindow.app = this;
+
+      // Wire up button clicks in PiP to call methods on app
+      pipDoc.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn');
+        if (!btn) return;
+        const onclick = btn.getAttribute('onclick');
+        if (onclick) {
+          new Function(onclick).call(this.pipWindow);
+        }
+      });
+
+      // Cleanup on PiP close
+      this.pipWindow.addEventListener('pagehide', () => {
+        this.pipWindow = null;
+      });
+    } catch (e) {
+      // PiP request failed (e.g. not triggered by user gesture)
+    }
   }
 
   // ----------------------------------------

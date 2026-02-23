@@ -124,6 +124,36 @@ body {
   justify-content: center;
   gap: 20px;
   padding-top: 20px;
+  position: relative;
+}
+
+/* ========================================
+   PiP Button
+   ======================================== */
+.pip-btn {
+  display: none;
+  position: absolute;
+  top: 12px;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-radius: 50%;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.pip-btn:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.pip-btn.supported {
+  display: flex;
 }
 
 .phase-label {
