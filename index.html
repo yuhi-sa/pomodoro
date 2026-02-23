@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>ポモドーロタイマー</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍅</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <nav class="nav">
+      <button class="nav-btn active" data-view="timer">タイマー</button>
+      <button class="nav-btn" data-view="dashboard">ダッシュボード</button>
+      <button class="nav-btn" data-view="settings">設定</button>
+    </nav>
+
+    <!-- Timer View -->
+    <div id="timer-view" class="view active">
+      <div class="phase-label" id="phase-label">準備完了</div>
+      <div class="phase-sub" id="phase-sub">スタートボタンを押して始めよう</div>
+
+      <div class="timer-container">
+        <svg class="timer-ring" viewBox="0 0 200 200">
+          <circle class="timer-ring-bg" cx="100" cy="100" r="88" />
+          <circle class="timer-ring-progress" cx="100" cy="100" r="88" id="progress-ring" />
+        </svg>
+        <div class="timer-display">
+          <span class="timer-time" id="timer-time">1:00</span>
+          <span class="timer-sub" id="timer-sub"></span>
+        </div>
+      </div>
+
+      <div class="actions" id="actions">
+        <button class="btn btn-primary" id="btn-start">スタート</button>
+      </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view">
+      <h2 class="view-title">ダッシュボード</h2>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="today-time">0:00:00</div>
+          <div class="stat-label">今日の作業時間</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="today-sessions">0</div>
+          <div class="stat-label">今日のセッション</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="total-time">0:00:00</div>
+          <div class="stat-label">累計作業時間</div>
+        </div>
+      </div>
+
+      <div class="chart-section">
+        <h3 class="chart-title">過去7日間の作業時間</h3>
+        <div class="bar-chart" id="bar-chart"></div>
+      </div>
+
+      <div class="history-section">
+        <h3 class="chart-title">今日のセッション履歴</h3>
+        <div id="session-list" class="session-list"></div>
+      </div>
+    </div>
+
+    <!-- Settings View -->
+    <div id="settings-view" class="view">
+      <h2 class="view-title">設定</h2>
+
+      <div class="settings-group">
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">通知音</span>
+            <span class="setting-desc">アイドリング完了時に音を鳴らす</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="sound-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">自動移行</span>
+            <span class="setting-desc">アイドリング後に自動で作業に移行する</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="auto-transition-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3 class="settings-group-title">データ管理</h3>
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">作業履歴をリセット</span>
+            <span class="setting-desc">すべての作業履歴を削除します</span>
+          </div>
+          <button class="btn btn-danger btn-sm" id="btn-reset-history">リセット</button>
+        </div>
+      </div>
+
+      <div class="about-section">
+        <p class="about-text">
+          ポモドーロタイマー<br>
+          「動き出し」をサポートする1分間のアイドリングで、<br>
+          作業のハードルを下げます。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
