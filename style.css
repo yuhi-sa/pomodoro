@@ -543,6 +543,154 @@ body {
 }
 
 /* ========================================
+   Spec View
+   ======================================== */
+.spec-section {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.spec-heading {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.spec-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+/* Principles */
+.spec-principles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.spec-principle {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.spec-principle p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.6;
+}
+
+.spec-principle strong {
+  font-size: 14px;
+}
+
+.spec-principle-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ready);
+  color: white;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Flow */
+.spec-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.spec-flow-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.spec-flow-step p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.6;
+}
+
+.spec-flow-step strong {
+  font-size: 14px;
+}
+
+.spec-flow-badge {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.badge-idling { background: var(--color-idling); }
+.badge-working { background: var(--color-working); }
+.badge-break { background: var(--color-break); }
+
+.spec-flow-arrow {
+  width: 2px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  margin-left: 13px;
+}
+
+/* Table */
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.spec-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.spec-table td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.spec-table tr:last-child td {
+  border-bottom: none;
+}
+
+.spec-table td:first-child {
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.spec-table td:last-child {
+  color: var(--text-secondary);
+}
+
+/* ========================================
    Responsive
    ======================================== */
 @media (max-width: 380px) {

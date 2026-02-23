@@ -12,6 +12,7 @@
     <nav class="nav">
       <button class="nav-btn active" data-view="timer">タイマー</button>
       <button class="nav-btn" data-view="dashboard">ダッシュボード</button>
+      <button class="nav-btn" data-view="spec">仕様</button>
       <button class="nav-btn" data-view="settings">設定</button>
     </nav>
 
@@ -63,6 +64,129 @@
       <div class="history-section">
         <h3 class="chart-title">今日のセッション履歴</h3>
         <div id="session-list" class="session-list"></div>
+      </div>
+    </div>
+
+    <!-- Spec View -->
+    <div id="spec-view" class="view">
+      <h2 class="view-title">仕様</h2>
+
+      <div class="spec-section">
+        <h3 class="spec-heading">コンセプト</h3>
+        <p class="spec-text">
+          従来のポモドーロテクニック（25分作業+5分休憩の繰り返し）では、
+          定期的な休憩のたびに「動き出し」のコストが発生します。
+          本アプリは以下の3つの思想に基づき、この問題を解決します。
+        </p>
+        <div class="spec-principles">
+          <div class="spec-principle">
+            <span class="spec-principle-num">1</span>
+            <div>
+              <strong>定期的な休憩を排除</strong>
+              <p>アプリ側で休憩タイミングを強制しません。休憩はユーザーが自分で決めます。</p>
+            </div>
+          </div>
+          <div class="spec-principle">
+            <span class="spec-principle-num">2</span>
+            <div>
+              <strong>「動き出し」をサポート</strong>
+              <p>1分間のアイドリングで作業興奮を引き出し、スムーズに作業へ移行します。</p>
+            </div>
+          </div>
+          <div class="spec-principle">
+            <span class="spec-principle-num">3</span>
+            <div>
+              <strong>報酬系を刺激</strong>
+              <p>ダッシュボードで作業実績を可視化し、達成感を得られるようにします。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spec-section">
+        <h3 class="spec-heading">タイマーの流れ</h3>
+        <div class="spec-flow">
+          <div class="spec-flow-step">
+            <span class="spec-flow-badge badge-idling">1</span>
+            <div>
+              <strong>アイドリング（1分）</strong>
+              <p>「1分だけ」の超短期作業。円形プログレスが溜まっていきます。</p>
+            </div>
+          </div>
+          <div class="spec-flow-arrow"></div>
+          <div class="spec-flow-step">
+            <span class="spec-flow-badge badge-idling">2</span>
+            <div>
+              <strong>選択</strong>
+              <p>「続行」で作業モードへ。「1分休憩」で小休憩へ。<br>操作しなければ5秒後に自動で作業モードへ移行します。</p>
+            </div>
+          </div>
+          <div class="spec-flow-arrow"></div>
+          <div class="spec-flow-step">
+            <span class="spec-flow-badge badge-working">3</span>
+            <div>
+              <strong>作業（時間無制限）</strong>
+              <p>集中が続く限り作業を継続。疲れたら「休憩する」ボタンで休憩へ。</p>
+            </div>
+          </div>
+          <div class="spec-flow-arrow"></div>
+          <div class="spec-flow-step">
+            <span class="spec-flow-badge badge-break">4</span>
+            <div>
+              <strong>休憩（時間無制限）</strong>
+              <p>好きなだけ休憩。「休憩終了」でアイドリングに戻ります。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spec-section">
+        <h3 class="spec-heading">時間配分</h3>
+        <table class="spec-table">
+          <thead>
+            <tr><th>フェーズ</th><th>時間</th><th>説明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>アイドリング</td><td>1分</td><td>作業開始のウォームアップ</td></tr>
+            <tr><td>自動移行</td><td>5秒</td><td>アイドリング後、操作がなければ作業へ</td></tr>
+            <tr><td>作業</td><td>無制限</td><td>ユーザーが休憩を選ぶまで継続</td></tr>
+            <tr><td>小休憩</td><td>1分</td><td>アイドリング後に選択した場合</td></tr>
+            <tr><td>休憩</td><td>無制限</td><td>ユーザーが終了を選ぶまで継続</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="spec-section">
+        <h3 class="spec-heading">機能一覧</h3>
+        <table class="spec-table">
+          <thead>
+            <tr><th>機能</th><th>説明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>円形タイマー</td><td>SVGによるプログレスリング。アイドリング時は円が溜まり、小休憩時は減っていく</td></tr>
+            <tr><td>通知音</td><td>Web Audio APIによるビープ音。アイドリング完了時・小休憩完了時に鳴動。設定でON/OFF可能</td></tr>
+            <tr><td>自動移行</td><td>アイドリング完了後、5秒間操作がなければ自動で作業モードへ。設定でON/OFF可能</td></tr>
+            <tr><td>ダッシュボード</td><td>今日の作業時間・セッション数・累計時間を表示。過去7日間の棒グラフ、セッション履歴</td></tr>
+            <tr><td>データ永続化</td><td>localStorageに設定・作業履歴を保存。ページを閉じてもデータが残る</td></tr>
+            <tr><td>バックグラウンド対応</td><td>Date.now()ベースのタイマーにより、タブ非表示時もずれなく動作</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="spec-section">
+        <h3 class="spec-heading">技術仕様</h3>
+        <table class="spec-table">
+          <thead>
+            <tr><th>項目</th><th>内容</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>フロントエンド</td><td>HTML / CSS / Vanilla JavaScript（フレームワーク不使用）</td></tr>
+            <tr><td>ホスティング</td><td>GitHub Pages（GitHub Actionsで自動デプロイ）</td></tr>
+            <tr><td>データ保存</td><td>localStorage（サーバー不要）</td></tr>
+            <tr><td>音声</td><td>Web Audio API（外部ファイル不要）</td></tr>
+            <tr><td>対応環境</td><td>モダンブラウザ（Chrome, Safari, Firefox, Edge）、スマホ・PC対応</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
