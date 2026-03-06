@@ -27,3 +27,6 @@ jobs:
           path: .
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Ping sitemap to Google
+        if: success()
+        run: curl -s "https://www.google.com/ping?sitemap=https://yuhi-sa.github.io/pomodoro/sitemap.xml"
