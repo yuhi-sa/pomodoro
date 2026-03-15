@@ -729,8 +729,227 @@ class PomodoroApp {
     // Bar chart
     this.renderBarChart(today);
 
+    // Focus pattern analysis
+    this.renderStatsSummary();
+    this.renderTimeOfDayChart();
+    this.renderDayOfWeekChart();
+    this.renderBestTime();
+
     // Session list
     this.renderSessionList(todaySessions);
+  }
+
+  // ----------------------------------------
+  // Focus Pattern Analysis
+  // ----------------------------------------
+  getTimeSlot(hour) {
+    if (hour >= 5 && hour < 12) return 0;  // 朝 (5-11)
+    if (hour >= 12 && hour < 14) return 1; // 昼 (12-13)
+    if (hour >= 14 && hour < 18) return 2; // 午後 (14-17)
+    return 3;                               // 夜 (18-4)
+  }
+
+  getTimeSlotLabel(index) {
+    const labels = ['朝(5-11時)', '昼(12-13時)', '午後(14-17時)', '夜(18-4時)'];
+    return labels[index];
+  }
+
+  getTimeOfDayData() {
+    const slots = [
+      { label: '朝(5-11時)', totalDuration: 0, count: 0 },
+      { label: '昼(12-13時)', totalDuration: 0, count: 0 },
+      { label: '午後(14-17時)', totalDuration: 0, count: 0 },
+      { label: '夜(18-4時)', totalDuration: 0, count: 0 },
+    ];
+
+    for (const session of this.history.sessions) {
+      if (!session.timestamp) continue;
+      const hour = new Date(session.timestamp).getHours();
+      const slotIndex = this.getTimeSlot(hour);
+      slots[slotIndex].totalDuration += session.duration;
+      slots[slotIndex].count += 1;
+    }
+
+    return slots.map((slot) => ({
+      label: slot.label,
+      avgDuration: slot.count > 0 ? Math.round(slot.totalDuration / slot.count) : 0,
+      count: slot.count,
+    }));
+  }
+
+  getDayOfWeekData() {
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const days = dayNames.map((name) => ({
+      label: name,
+      totalDuration: 0,
+      count: 0,
+    }));
+
+    for (const session of this.history.sessions) {
+      if (!session.timestamp) continue;
+      const dayIndex = new Date(session.timestamp).getDay();
+      days[dayIndex].totalDuration += session.duration;
+      days[dayIndex].count += 1;
+    }
+
+    return days.map((day) => ({
+      label: day.label,
+      avgDuration: day.count > 0 ? Math.round(day.totalDuration / day.count) : 0,
+      count: day.count,
+    }));
+  }
+
+  getStatsSummary() {
+    const sessions = this.history.sessions;
+    const totalSessions = sessions.length;
+
+    if (totalSessions === 0) {
+      return {
+        totalSessions: 0,
+        avgDuration: 0,
+        maxDuration: 0,
+        weekComparison: null,
+      };
+    }
+
+    const totalDuration = sessions.reduce((sum, s) => sum + s.duration, 0);
+    const avgDuration = Math.round(totalDuration / totalSessions);
+    const maxDuration = Math.max(...sessions.map((s) => s.duration));
+
+    // This week vs last week
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dayOfWeek = todayStart.getDay(); // 0=Sun
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+    const thisWeekStart = new Date(todayStart);
+    thisWeekStart.setDate(todayStart.getDate() - mondayOffset);
+    const thisWeekStartMs = thisWeekStart.getTime();
+
+    const lastWeekStart = new Date(thisWeekStart);
+    lastWeekStart.setDate(thisWeekStart.getDate() - 7);
+    const lastWeekStartMs = lastWeekStart.getTime();
+
+    const thisWeekTotal = sessions
+      .filter((s) => s.timestamp >= thisWeekStartMs)
+      .reduce((sum, s) => sum + s.duration, 0);
+
+    const lastWeekTotal = sessions
+      .filter((s) => s.timestamp >= lastWeekStartMs && s.timestamp < thisWeekStartMs)
+      .reduce((sum, s) => sum + s.duration, 0);
+
+    let weekComparison = null;
+    if (lastWeekTotal > 0) {
+      const changePercent = Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100);
+      weekComparison = { thisWeek: thisWeekTotal, lastWeek: lastWeekTotal, changePercent };
+    } else if (thisWeekTotal > 0) {
+      weekComparison = { thisWeek: thisWeekTotal, lastWeek: 0, changePercent: null };
+    }
+
+    return { totalSessions, avgDuration, maxDuration, weekComparison };
+  }
+
+  getBestTime() {
+    const timeData = this.getTimeOfDayData();
+    const dayData = this.getDayOfWeekData();
+
+    const validTime = timeData.filter((t) => t.count >= 1);
+    const validDay = dayData.filter((d) => d.count >= 1);
+
+    if (validTime.length === 0 || validDay.length === 0) {
+      return null;
+    }
+
+    const bestTimeSlot = validTime.reduce((best, cur) =>
+      cur.avgDuration > best.avgDuration ? cur : best
+    );
+
+    const bestDay = validDay.reduce((best, cur) =>
+      cur.avgDuration > best.avgDuration ? cur : best
+    );
+
+    return { timeSlot: bestTimeSlot, day: bestDay };
+  }
+
+  renderStatsSummary() {
+    const stats = this.getStatsSummary();
+
+    document.getElementById('total-sessions').textContent = stats.totalSessions;
+    document.getElementById('avg-session-time').textContent =
+      stats.avgDuration > 0 ? this.formatShortDuration(stats.avgDuration) : '0m';
+    document.getElementById('max-session-time').textContent =
+      stats.maxDuration > 0 ? this.formatShortDuration(stats.maxDuration) : '0m';
+
+    const weekEl = document.getElementById('week-comparison');
+    if (stats.weekComparison) {
+      if (stats.weekComparison.changePercent !== null) {
+        const sign = stats.weekComparison.changePercent >= 0 ? '+' : '';
+        weekEl.textContent = `${sign}${stats.weekComparison.changePercent}%`;
+        weekEl.className = `stat-value ${stats.weekComparison.changePercent >= 0 ? 'stat-positive' : 'stat-negative'}`;
+      } else {
+        weekEl.textContent = this.formatShortDuration(stats.weekComparison.thisWeek);
+        weekEl.className = 'stat-value';
+      }
+    } else {
+      weekEl.textContent = '--';
+      weekEl.className = 'stat-value';
+    }
+  }
+
+  renderTimeOfDayChart() {
+    const chartEl = document.getElementById('time-of-day-chart');
+    const data = this.getTimeOfDayData();
+    const maxAvg = Math.max(...data.map((d) => d.avgDuration), 1);
+
+    chartEl.innerHTML = data
+      .map((slot) => {
+        const heightPct = Math.max(1, (slot.avgDuration / maxAvg) * 100);
+        const value = slot.avgDuration > 0 ? this.formatShortDuration(slot.avgDuration) : '';
+
+        return `
+        <div class="bar-item">
+          <span class="bar-value">${value}</span>
+          <div class="bar bar-pattern" style="height: ${heightPct}%"></div>
+          <span class="bar-label">${slot.label}</span>
+        </div>
+      `;
+      })
+      .join('');
+  }
+
+  renderDayOfWeekChart() {
+    const chartEl = document.getElementById('day-of-week-chart');
+    const data = this.getDayOfWeekData();
+    const maxAvg = Math.max(...data.map((d) => d.avgDuration), 1);
+
+    chartEl.innerHTML = data
+      .map((day) => {
+        const heightPct = Math.max(1, (day.avgDuration / maxAvg) * 100);
+        const value = day.avgDuration > 0 ? this.formatShortDuration(day.avgDuration) : '';
+
+        return `
+        <div class="bar-item">
+          <span class="bar-value">${value}</span>
+          <div class="bar bar-pattern" style="height: ${heightPct}%"></div>
+          <span class="bar-label">${day.label}</span>
+        </div>
+      `;
+      })
+      .join('');
+  }
+
+  renderBestTime() {
+    const msgEl = document.getElementById('best-time-message');
+    const best = this.getBestTime();
+
+    if (!best) {
+      msgEl.textContent = 'データが不足しています。セッションを重ねると分析結果が表示されます。';
+      return;
+    }
+
+    msgEl.textContent =
+      `あなたのベストタイムは${best.day.label}曜日の${best.timeSlot.label}です！` +
+      `（平均${this.formatShortDuration(best.timeSlot.avgDuration)}/セッション）`;
   }
 
   renderBarChart(today) {

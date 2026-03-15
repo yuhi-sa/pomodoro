@@ -446,6 +446,52 @@ body {
 }
 
 /* ========================================
+   Dashboard - Stats Summary (4-column grid)
+   ======================================== */
+.stats-grid-4 {
+  grid-template-columns: repeat(2, 1fr);
+  margin-bottom: 0;
+}
+
+.stat-positive {
+  color: #22c55e;
+}
+
+.stat-negative {
+  color: #ef4444;
+}
+
+/* ========================================
+   Dashboard - Best Time
+   ======================================== */
+.best-time-section {
+  text-align: center;
+}
+
+.best-time-message {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-idling);
+  line-height: 1.8;
+  padding: 8px 0;
+}
+
+/* ========================================
+   Dashboard - Pattern Charts
+   ======================================== */
+.bar-chart-4 {
+  height: 140px;
+}
+
+.bar-chart-7 {
+  height: 140px;
+}
+
+.bar-pattern {
+  background: linear-gradient(to top, var(--color-ready), #818cf8);
+}
+
+/* ========================================
    Dashboard - Session List
    ======================================== */
 .history-section {
@@ -768,6 +814,10 @@ body {
   .stats-grid {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .stats-grid-4 {
+    grid-template-columns: 1fr;
   }
 
   .stat-card {

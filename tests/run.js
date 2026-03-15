@@ -5,6 +5,7 @@ const testFiles = [
   { name: 'Data Validation', path: './test_data_validation.js' },
   { name: 'Date Utils', path: './test_date_utils.js' },
   { name: 'Save Prevention', path: './test_save_prevention.js' },
+  { name: 'Focus Pattern', path: './test_focus_pattern.js' },
 ];
 
 let totalPassed = 0;

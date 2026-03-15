@@ -137,6 +137,47 @@
         <div class="bar-chart" id="bar-chart"></div>
       </div>
 
+      <!-- 統計サマリー -->
+      <div class="chart-section">
+        <h3 class="chart-title">統計サマリー</h3>
+        <div class="stats-grid stats-grid-4">
+          <div class="stat-card">
+            <div class="stat-value" id="total-sessions">0</div>
+            <div class="stat-label">総セッション数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="avg-session-time">0:00</div>
+            <div class="stat-label">平均セッション時間</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="max-session-time">0:00</div>
+            <div class="stat-label">最長セッション</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="week-comparison">--</div>
+            <div class="stat-label">今週 vs 先週</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ベストタイム提案 -->
+      <div class="chart-section best-time-section">
+        <h3 class="chart-title">ベストタイム</h3>
+        <div class="best-time-message" id="best-time-message">データが不足しています</div>
+      </div>
+
+      <!-- 時間帯別の集中パターン -->
+      <div class="chart-section">
+        <h3 class="chart-title">時間帯別の集中パターン</h3>
+        <div class="bar-chart bar-chart-4" id="time-of-day-chart"></div>
+      </div>
+
+      <!-- 曜日別の集中パターン -->
+      <div class="chart-section">
+        <h3 class="chart-title">曜日別の集中パターン</h3>
+        <div class="bar-chart bar-chart-7" id="day-of-week-chart"></div>
+      </div>
+
       <div class="history-section">
         <h3 class="chart-title">今日のセッション履歴</h3>
         <div id="session-list" class="session-list"></div>
