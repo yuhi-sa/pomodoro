@@ -210,7 +210,6 @@ export function useTimer(
   // ----------------------------------------
   // State Transitions
   // ----------------------------------------
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   function enterReady() {
     clearTimers();
     setCurrentState(State.READY);
