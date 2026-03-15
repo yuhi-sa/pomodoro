@@ -24,16 +24,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
       - name: Install dependencies
         run: npm ci
       - name: Lint
-        run: npx eslint app.js
+        run: npm run lint
       - name: Run tests
-        run: node tests/run.js
+        run: npm run test:ci
+      - name: Build
+        run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: out
       - id: deployment
         uses: actions/deploy-pages@v4
       - name: Ping sitemap to Google
