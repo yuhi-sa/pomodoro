@@ -1,0 +1,23 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-undef": "error",
+    "no-unused-vars": ["warn", { "args": "none" }],
+    "no-console": "off",
+    "eqeqeq": "warn",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-var": "warn",
+    "prefer-const": "warn"
+  },
+  "globals": {
+    "documentPictureInPicture": "readonly"
+  }
+}

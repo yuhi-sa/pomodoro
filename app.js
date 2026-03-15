@@ -72,6 +72,14 @@ class PomodoroApp {
     if ('documentPictureInPicture' in window) {
       this.pipBtn.classList.add('supported');
     }
+
+    // Export/Import
+    this.btnExport = document.getElementById('btn-export');
+    this.btnImport = document.getElementById('btn-import');
+    this.importFile = document.getElementById('import-file');
+
+    // Screen reader announcement region
+    this.phaseAnnounce = document.getElementById('phase-announce');
   }
 
   bindEvents() {
@@ -111,6 +119,29 @@ class PomodoroApp {
 
     // PiP
     this.pipBtn.addEventListener('click', () => this.openPiP());
+
+    // Export/Import
+    this.btnExport.addEventListener('click', () => this.exportHistory());
+    this.btnImport.addEventListener('click', () => this.importFile.click());
+    this.importFile.addEventListener('change', (e) => this.importHistory(e));
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Ignore when typing in inputs
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        this.handleKeySpace();
+      } else if (e.code === 'KeyR' && !e.shiftKey) {
+        e.preventDefault();
+        this.handleKeyReset();
+      } else if (e.code === 'KeyS' && !e.shiftKey) {
+        e.preventDefault();
+        this.handleKeySkip();
+      }
+    });
 
     // Save work on page unload
     window.addEventListener('beforeunload', () => {
@@ -376,6 +407,11 @@ class PomodoroApp {
     this.phaseLabel.textContent = label;
     this.phaseLabel.className = `phase-label phase-${phase}`;
     this.phaseSub.textContent = sub;
+
+    // Announce phase change to screen readers
+    if (this.phaseAnnounce) {
+      this.phaseAnnounce.textContent = `${label}${sub ? ' - ' + sub : ''}`;
+    }
 
     if (this.pipWindow && !this.pipWindow.closed) {
       const doc = this.pipWindow.document;
@@ -791,6 +827,107 @@ class PomodoroApp {
 
   getDateString(date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  // ----------------------------------------
+  // Keyboard shortcuts
+  // ----------------------------------------
+  handleKeySpace() {
+    switch (this.state) {
+      case State.READY:
+        this.onStart();
+        break;
+      case State.IDLING_DONE:
+        this.onContinue();
+        break;
+    }
+  }
+
+  handleKeyReset() {
+    this.transition(State.READY);
+  }
+
+  handleKeySkip() {
+    switch (this.state) {
+      case State.IDLING:
+        this.transition(State.IDLING_DONE);
+        break;
+      case State.IDLING_DONE:
+        this.onContinue();
+        break;
+      case State.WORKING:
+        this.onBreak();
+        break;
+      case State.SHORT_BREAK:
+        this.transition(State.IDLING);
+        break;
+      case State.BREAK:
+        this.onEndBreak();
+        break;
+    }
+  }
+
+  // ----------------------------------------
+  // Export / Import
+  // ----------------------------------------
+  exportHistory() {
+    const data = JSON.stringify(this.history, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pomodoro-history-${this.getDateString(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  importHistory(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (!imported || !Array.isArray(imported.sessions)) {
+          alert('無効なデータ形式です。');
+          return;
+        }
+
+        // Merge: avoid duplicates by timestamp
+        const existingTimestamps = new Set(
+          this.history.sessions.map((s) => s.timestamp)
+        );
+
+        let addedCount = 0;
+        let skippedCount = 0;
+        for (const session of imported.sessions) {
+          if (!session.timestamp || !session.duration || !session.date) {
+            skippedCount++;
+            continue;
+          }
+          if (!existingTimestamps.has(session.timestamp)) {
+            this.history.sessions.push(session);
+            existingTimestamps.add(session.timestamp);
+            addedCount++;
+          }
+        }
+
+        this.saveHistory();
+        this.renderDashboard();
+        const msg = `${addedCount}件のセッションをインポートしました。` +
+          (skippedCount > 0 ? `\n${skippedCount}件は不正なデータのためスキップしました。` : '');
+        alert(msg);
+      } catch (err) {
+        alert('JSONの解析に失敗しました: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset file input so re-importing the same file triggers change
+    event.target.value = '';
   }
 }
 

@@ -1,0 +1,12 @@
+{
+  "name": "pomodoro",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/run.js",
+    "lint": "eslint app.js"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  }
+}
