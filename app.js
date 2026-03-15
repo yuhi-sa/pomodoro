@@ -6,6 +6,18 @@ const CIRCUMFERENCE = 2 * Math.PI * 88; // ~553
 const IDLING_DURATION = 60; // 1 minute
 const SHORT_BREAK_DURATION = 60; // 1 minute
 const AUTO_TRANSITION_DELAY = 5; // seconds
+const IDLING_TICK_INTERVAL_MS = 100; // ms tick interval for idling/short-break
+const AUDIO_VOLUME = 0.25; // beep volume
+const MIN_SESSION_DURATION = 5; // seconds, ignore sessions shorter than this
+
+// Action map for safe PiP button delegation (replaces new Function / eval)
+const PIP_ACTIONS = {
+  start: 'onStart',
+  continue: 'onContinue',
+  shortBreak: 'onShortBreak',
+  break: 'onBreak',
+  endBreak: 'onEndBreak',
+};
 
 const State = {
   READY: 'ready',
@@ -84,6 +96,16 @@ class PomodoroApp {
         this.history = { sessions: [] };
         this.saveHistory();
         this.renderDashboard();
+      }
+    });
+
+    // Action delegation for data-action buttons (main document)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const method = PIP_ACTIONS[btn.dataset.action];
+      if (method && typeof this[method] === 'function') {
+        this[method]();
       }
     });
 
@@ -172,7 +194,7 @@ class PomodoroApp {
     this.progressRing.classList.remove('pulse');
 
     this.setActions(`
-      <button class="btn btn-primary" onclick="app.onStart()">スタート</button>
+      <button class="btn btn-primary" data-action="start">スタート</button>
     `);
   }
 
@@ -188,7 +210,7 @@ class PomodoroApp {
     this.setActions('');
 
     this.startTime = Date.now();
-    this.timerInterval = setInterval(() => this.tick(), 100);
+    this.timerInterval = setInterval(() => this.tick(), IDLING_TICK_INTERVAL_MS);
   }
 
   // ----------------------------------------
@@ -207,8 +229,8 @@ class PomodoroApp {
       this.phaseSub.textContent = `${this.autoTransitionCountdown}秒後に自動で作業に移行`;
 
       this.setActions(`
-        <button class="btn btn-idling" onclick="app.onContinue()">続行</button>
-        <button class="btn btn-secondary" onclick="app.onShortBreak()">1分休憩</button>
+        <button class="btn btn-idling" data-action="continue">続行</button>
+        <button class="btn btn-secondary" data-action="shortBreak">1分休憩</button>
       `);
 
       this.autoTransitionTimer = setInterval(() => {
@@ -221,8 +243,8 @@ class PomodoroApp {
       }, 1000);
     } else {
       this.setActions(`
-        <button class="btn btn-idling" onclick="app.onContinue()">続行</button>
-        <button class="btn btn-secondary" onclick="app.onShortBreak()">1分休憩</button>
+        <button class="btn btn-idling" data-action="continue">続行</button>
+        <button class="btn btn-secondary" data-action="shortBreak">1分休憩</button>
       `);
     }
   }
@@ -240,7 +262,7 @@ class PomodoroApp {
     this.startTime = Date.now();
 
     this.setActions(`
-      <button class="btn btn-break" onclick="app.onBreak()">休憩する</button>
+      <button class="btn btn-break" data-action="break">休憩する</button>
     `);
 
     this.timerInterval = setInterval(() => this.tick(), 1000);
@@ -257,7 +279,7 @@ class PomodoroApp {
     this.setActions('');
 
     this.startTime = Date.now();
-    this.timerInterval = setInterval(() => this.tick(), 100);
+    this.timerInterval = setInterval(() => this.tick(), IDLING_TICK_INTERVAL_MS);
   }
 
   // ----------------------------------------
@@ -272,7 +294,7 @@ class PomodoroApp {
     this.startTime = Date.now();
 
     this.setActions(`
-      <button class="btn btn-break" onclick="app.onEndBreak()">休憩終了</button>
+      <button class="btn btn-break" data-action="endBreak">休憩終了</button>
     `);
 
     this.timerInterval = setInterval(() => this.tick(), 1000);
@@ -494,16 +516,13 @@ class PomodoroApp {
         <div id="pip-actions" class="pip-actions">${this.actions.innerHTML}</div>
       `;
 
-      // Make app accessible from PiP window for onclick handlers
-      this.pipWindow.app = this;
-
-      // Wire up button clicks in PiP to call methods on app
+      // Wire up button clicks in PiP using safe data-action delegation
       pipDoc.addEventListener('click', (e) => {
-        const btn = e.target.closest('.btn');
+        const btn = e.target.closest('[data-action]');
         if (!btn) return;
-        const onclick = btn.getAttribute('onclick');
-        if (onclick) {
-          new Function(onclick).call(this.pipWindow);
+        const method = PIP_ACTIONS[btn.dataset.action];
+        if (method && typeof this[method] === 'function') {
+          this[method]();
         }
       });
 
@@ -512,7 +531,7 @@ class PomodoroApp {
         this.pipWindow = null;
       });
     } catch (e) {
-      // PiP request failed (e.g. not triggered by user gesture)
+      console.warn('PiP request failed:', e.message);
     }
   }
 
@@ -539,7 +558,7 @@ class PomodoroApp {
     try {
       this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     } catch (e) {
-      // Audio not supported
+      console.warn('Audio init failed:', e.message);
     }
   }
 
@@ -561,13 +580,13 @@ class PomodoroApp {
       oscillator.type = 'sine';
 
       const now = this.audioCtx.currentTime;
-      gainNode.gain.setValueAtTime(0.25, now);
+      gainNode.gain.setValueAtTime(AUDIO_VOLUME, now);
       gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
       oscillator.start(now);
       oscillator.stop(now + duration);
     } catch (e) {
-      // Ignore audio errors
+      console.warn('Audio playback failed:', e.message);
     }
   }
 
@@ -577,9 +596,14 @@ class PomodoroApp {
   saveCurrentWork() {
     if (this.state !== State.WORKING || !this.workStartTime) return;
 
-    const duration = Math.floor((Date.now() - this.workStartTime) / 1000);
-    if (duration < 5) return; // Ignore very short sessions
+    // Prevent double-save (beforeunload + transition both calling this)
+    const workStart = this.workStartTime;
+    if (this._lastSavedWorkStart === workStart) return;
 
+    const duration = Math.floor((Date.now() - workStart) / 1000);
+    if (duration < MIN_SESSION_DURATION) return;
+
+    this._lastSavedWorkStart = workStart;
     this.addWorkSession(duration);
     this.workStartTime = null;
   }
@@ -600,22 +624,29 @@ class PomodoroApp {
   // Persistence
   // ----------------------------------------
   loadSettings() {
+    const defaults = { sound: true, autoTransition: true };
     try {
       const saved = localStorage.getItem('pomodoro-settings');
       if (saved) {
-        return { sound: true, autoTransition: true, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        if (typeof parsed !== 'object' || parsed === null ||
+            typeof parsed.sound !== 'boolean' || typeof parsed.autoTransition !== 'boolean') {
+          console.warn('Invalid settings data, resetting to defaults');
+          return { ...defaults };
+        }
+        return { ...defaults, ...parsed };
       }
     } catch (e) {
-      // Ignore
+      console.warn('Failed to load settings:', e.message);
     }
-    return { sound: true, autoTransition: true };
+    return { ...defaults };
   }
 
   saveSettings() {
     try {
       localStorage.setItem('pomodoro-settings', JSON.stringify(this.settings));
     } catch (e) {
-      // Ignore
+      console.warn('Failed to save settings:', e.message);
     }
   }
 
@@ -623,10 +654,15 @@ class PomodoroApp {
     try {
       const saved = localStorage.getItem('pomodoro-history');
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (typeof parsed !== 'object' || parsed === null || !Array.isArray(parsed.sessions)) {
+          console.warn('Invalid history data, resetting to defaults');
+          return { sessions: [] };
+        }
+        return parsed;
       }
     } catch (e) {
-      // Ignore
+      console.warn('Failed to load history:', e.message);
     }
     return { sessions: [] };
   }
@@ -635,7 +671,7 @@ class PomodoroApp {
     try {
       localStorage.setItem('pomodoro-history', JSON.stringify(this.history));
     } catch (e) {
-      // Ignore
+      console.warn('Failed to save history:', e.message);
     }
   }
 
