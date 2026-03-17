@@ -14,7 +14,7 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<ViewName>('timer');
   const [settings, setSettings] = useLocalStorage<SettingsType>(
     'pomodoro-settings',
-    { sound: true, autoTransition: true },
+    { sound: true, autoTransition: true, notification: false },
     validateSettings
   );
   const [history, setHistory] = useLocalStorage<History>(

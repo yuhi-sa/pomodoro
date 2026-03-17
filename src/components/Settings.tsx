@@ -62,6 +62,42 @@ export default function Settings({ settings, setSettings, setHistory }: Settings
             <span className="absolute cursor-pointer inset-0 bg-[#444] rounded-[28px] transition-all duration-300 peer-checked:bg-[#6366f1] before:content-[''] before:absolute before:h-[22px] before:w-[22px] before:left-[3px] before:bottom-[3px] before:bg-white before:rounded-full before:transition-all before:duration-300 peer-checked:before:translate-x-5" />
           </label>
         </div>
+
+        {/* Desktop Notification Toggle */}
+        <div className="flex justify-between items-center px-4 py-3.5">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[15px] font-medium">デスクトップ通知</span>
+            <span className="text-xs text-[#9898a8]">
+              タイマー完了時にブラウザ通知を送る
+            </span>
+          </div>
+          <label className="relative w-12 h-7 shrink-0">
+            <input
+              type="checkbox"
+              className="opacity-0 w-0 h-0 peer"
+              checked={settings.notification}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                if (checked && 'Notification' in window && Notification.permission === 'denied') {
+                  alert('ブラウザの通知がブロックされています。ブラウザの設定から通知を許可してください。');
+                  return;
+                }
+                if (checked && 'Notification' in window && Notification.permission !== 'granted') {
+                  Notification.requestPermission().then((perm) => {
+                    if (perm === 'granted') {
+                      setSettings((prev) => ({ ...prev, notification: true }));
+                    } else {
+                      alert('通知の許可が必要です。');
+                    }
+                  });
+                  return;
+                }
+                setSettings((prev) => ({ ...prev, notification: checked }));
+              }}
+            />
+            <span className="absolute cursor-pointer inset-0 bg-[#444] rounded-[28px] transition-all duration-300 peer-checked:bg-[#6366f1] before:content-[''] before:absolute before:h-[22px] before:w-[22px] before:left-[3px] before:bottom-[3px] before:bg-white before:rounded-full before:transition-all before:duration-300 peer-checked:before:translate-x-5" />
+          </label>
+        </div>
       </div>
 
       <div className="bg-[#1a1a2e] rounded-xl py-1 mb-4">

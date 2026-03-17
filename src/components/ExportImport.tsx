@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import type { Session, History } from '../lib/types';
-import { getDateString } from '../lib/analytics';
+import { getDateString, formatDuration } from '../lib/analytics';
 
 interface ExportImportProps {
   history: History;
@@ -11,6 +11,27 @@ interface ExportImportProps {
 
 export default function ExportImport({ history, setHistory }: ExportImportProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const exportCSV = () => {
+    const sorted = [...history.sessions].sort((a, b) => a.timestamp - b.timestamp);
+    const header = '日付,開始時刻,作業時間(秒),作業時間';
+    const rows = sorted.map((s) => {
+      const time = new Date(s.timestamp);
+      const timeStr = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
+      return `${s.date},${timeStr},${s.duration},${formatDuration(s.duration)}`;
+    });
+    const csv = [header, ...rows].join('\n');
+    const bom = '\uFEFF'; // UTF-8 BOM for Excel compatibility
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pomodoro-history-${getDateString(new Date())}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const exportHistory = () => {
     const data = JSON.stringify(history, null, 2);
@@ -87,7 +108,14 @@ export default function ExportImport({ history, setHistory }: ExportImportProps)
         onClick={exportHistory}
         aria-label="セッション履歴をJSONでエクスポート"
       >
-        エクスポート
+        JSON出力
+      </button>
+      <button
+        className="px-4 py-2 text-[13px] bg-[#1a1a2e] text-[#e8e8ec] border border-white/10 rounded-xl font-semibold cursor-pointer hover:bg-[#222240] active:scale-[0.96] transition-all duration-200"
+        onClick={exportCSV}
+        aria-label="セッション履歴をCSVでエクスポート"
+      >
+        CSV出力
       </button>
       <button
         className="px-4 py-2 text-[13px] bg-[#1a1a2e] text-[#e8e8ec] border border-white/10 rounded-xl font-semibold cursor-pointer hover:bg-[#222240] active:scale-[0.96] transition-all duration-200"

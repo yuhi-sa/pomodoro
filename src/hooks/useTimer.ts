@@ -41,7 +41,8 @@ interface UseTimerReturn {
 export function useTimer(
   settings: Settings,
   history: History,
-  setHistory: (value: History | ((prev: History) => History)) => void
+  setHistory: (value: History | ((prev: History) => History)) => void,
+  onNotify?: (title: string, body?: string) => void
 ): UseTimerReturn {
   const [currentState, setCurrentState] = useState<StateValue>(State.READY);
   const [displayTime, setDisplayTime] = useState('1:00');
@@ -184,6 +185,7 @@ export function useTimer(
         setProgressColor('var(--color-break)');
         if (remaining <= 0) {
           playBeep(660, 0.1);
+          onNotify?.('小休憩終了', 'アイドリングを開始します');
           enterIdling();
         }
         break;
@@ -246,6 +248,7 @@ export function useTimer(
     setCurrentState(State.IDLING_DONE);
     playBeep(880, 0.12);
     setTimeout(() => playBeep(1100, 0.12), 150);
+    onNotify?.('アイドリング完了', '作業を続行するか休憩を取りましょう');
     setPhaseLabel('アイドリング完了');
     setPhaseClass('idling');
     setDisplayTime('0:00');

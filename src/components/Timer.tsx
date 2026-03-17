@@ -4,6 +4,7 @@ import { useEffect, useCallback } from 'react';
 import { State, CIRCUMFERENCE, type StateValue } from '../lib/types';
 import type { Settings, History } from '../lib/types';
 import { useTimer } from '../hooks/useTimer';
+import { useNotification } from '../hooks/useNotification';
 
 interface TimerProps {
   settings: Settings;
@@ -12,6 +13,8 @@ interface TimerProps {
 }
 
 export default function Timer({ settings, history, setHistory }: TimerProps) {
+  const { requestPermission, notify } = useNotification(settings.notification);
+
   const {
     timerState,
     onStart,
@@ -20,7 +23,14 @@ export default function Timer({ settings, history, setHistory }: TimerProps) {
     onBreak,
     onEndBreak,
     reset,
-  } = useTimer(settings, history, setHistory);
+  } = useTimer(settings, history, setHistory, notify);
+
+  // Request notification permission when notification setting is enabled
+  useEffect(() => {
+    if (settings.notification) {
+      requestPermission();
+    }
+  }, [settings.notification, requestPermission]);
 
   const { state, displayTime, progress, progressColor, isPulsing, phaseLabel, phaseSub, phaseClass } = timerState;
 

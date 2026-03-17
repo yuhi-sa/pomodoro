@@ -26,6 +26,7 @@ export interface History {
 export interface Settings {
   sound: boolean;
   autoTransition: boolean;
+  notification: boolean;
 }
 
 export interface TimeSlotData {

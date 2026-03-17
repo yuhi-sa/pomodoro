@@ -50,7 +50,10 @@ export function useLocalStorage<T>(
 export function validateSettings(value: unknown): boolean {
   if (typeof value !== 'object' || value === null) return false;
   const obj = value as Record<string, unknown>;
-  return typeof obj.sound === 'boolean' && typeof obj.autoTransition === 'boolean';
+  if (typeof obj.sound !== 'boolean' || typeof obj.autoTransition !== 'boolean') return false;
+  // notification is optional for backward compatibility
+  if ('notification' in obj && typeof obj.notification !== 'boolean') return false;
+  return true;
 }
 
 export function validateHistory(value: unknown): boolean {
